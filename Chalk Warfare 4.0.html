@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chalk Warfare 4.0 — Mini Prototype</title>
+  <style>
+    :root{--bg:#0f1724;--panel:#0b1220;--red:#d94f4f;--blue:#4f7bd9;--muted:#9aa6b2;--accent:#ffd166}
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial}
+    body{background:linear-gradient(180deg,var(--bg),#07101a);color:#e6eef6}
+    #gameWrap{display:flex;gap:16px;padding:18px;box-sizing:border-box;height:100vh}
+    #leftCol{width:340px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px;padding:14px}
+    #canvasWrap{flex:1;display:flex;flex-direction:column;gap:12px}
+    canvas{background:linear-gradient(180deg,#0b1a28,#08121b);border-radius:12px;display:block;}
+    h1{font-size:16px;margin:6px 0 12px}
+    .teamBox{background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;margin-bottom:10px}
+    .charRow{display:flex;align-items:center;gap:10px}
+    .avatar{width:48px;height:48px;border-radius:8px;flex:0 0 48px;display:flex;align-items:center;justify-content:center;font-weight:700}
+    .red{background:linear-gradient(135deg,#5a1515,#ab3f3f)}
+    .blue{background:linear-gradient(135deg,#193a7a,#3f6fbf)}
+    .meta{flex:1}
+    .meta b{display:block}
+    .hud{display:flex;gap:8px;align-items:center;margin-top:8px}
+    .bar{height:10px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden}
+    .bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#fff9);width:100%}
+    .btn{background:#0f2436;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);cursor:pointer}
+    footer{color:var(--muted);font-size:12px;margin-top:8px}
+    .controls{font-size:13px;color:var(--muted);margin-top:10px}
+    .bigScore{position:absolute;left:50%;transform:translateX(-50%);top:20px;background:rgba(255,255,255,0.02);padding:8px 16px;border-radius:8px;font-weight:700}
+    .abilityIcon{width:32px;height:32px;border-radius:6px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center}
+    .cooldown{height:6px;background:rgba(255,255,255,0.04);border-radius:6px;overflow:hidden}
+    .cooldown > i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),#2ad);width:0%}
+    @media (max-width:900px){#leftCol{display:none}}
+  </style>
+</head>
+<body>
+  <div id="gameWrap">
+    <div id="leftCol">
+      <h1>Chalk Warfare 4.0 — Prototype</h1>
+      <div class="teamBox">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="display:flex;gap:10px;align-items:center">
+            <div class="avatar red">R</div>
+            <div>
+              <b>Team Redstorm</b>
+              <div style="font-size:13px;color:var(--muted)">Aggression & speed</div>
+            </div>
+          </div>
+          <div style="font-weight:700;color:var(--red)">SCORE 0</div>
+        </div>
+        <div style="margin-top:10px">
+          <div class="charRow">
+            <div class="avatar red">M</div>
+            <div class="meta"><b>Mrudav Mehta</b><div style="font-size:13px;color:var(--muted)">The Tactician — Sniper</div></div>
+          </div>
+          <div class="charRow" style="margin-top:8px">
+            <div class="avatar red">A</div>
+            <div class="meta"><b>Aryan Panicker</b><div style="font-size:13px;color:var(--muted)">The Berserker — Melee</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="teamBox">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="display:flex;gap:10px;align-items:center">
+            <div class="avatar blue">B</div>
+            <div>
+              <b>Team Blueflare</b>
+              <div style="font-size:13px;color:var(--muted)">Defense & intel</div>
+            </div>
+          </div>
+          <div style="font-weight:700;color:var(--blue)">SCORE 0</div>
+        </div>
+
+        <div style="margin-top:10px">
+          <div class="charRow">
+            <div class="avatar blue">N</div>
+            <div class="meta"><b>Nguyen Le Duy</b><div style="font-size:13px;color:var(--muted)">Strategist — Marksman</div></div>
+          </div>
+          <div class="charRow" style="margin-top:8px">
+            <div class="avatar blue">G</div>
+            <div class="meta"><b>Gennady K.</b><div style="font-size:13px;color:var(--muted)">The Algorithm — Railgun</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:6px">
+        <div class="controls"><b>Controls</b><br>WASD — Move • Mouse — Aim • Click — Shoot • E — Special • R — Respawn</div>
+        <div style="height:12px"></div>
+        <div class="btn" id="respawnBtn">Respawn (R)</div>
+        <footer>Open this HTML file in any modern browser. This is a prototype — feel free to modify the code.</footer>
+      </div>
+    </div>
+
+    <div id="canvasWrap">
+      <div style="position:relative;">
+        <div class="bigScore">RED 0 — 0 BLUE</div>
+        <canvas id="game" width="1200" height="720"></canvas>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="abilityIcon" id="abilityIcon">E</div>
+          <div style="width:240px">
+            <div class="cooldown"><i id="cdBar" style="width:0%"></i></div>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px">Ability cooldown</div>
+          </div>
+        </div>
+        <div style="flex:1"></div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <div style="font-size:13px;color:var(--muted)">Health</div>
+          <div class="bar" style="width:220px"><i id="hpBar" style="width:100%"></i></div>
+          <div style="width:10px"></div>
+          <div style="font-size:13px;color:var(--muted)">Chalk</div>
+          <div class="bar" style="width:160px"><i id="energyBar" style="width:100%"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // --- Simple 2D prototype game engine for Chalk Warfare 4.0 ---
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  // HUD elements
+  const hpBar = document.getElementById('hpBar');
+  const energyBar = document.getElementById('energyBar');
+  const cdBar = document.getElementById('cdBar');
+
+  // Input
+  const keys = {};
+  let mouse = {x:0,y:0,down:false};
+  window.addEventListener('keydown', e=>{keys[e.key.toLowerCase()]=true});
+  window.addEventListener('keyup', e=>{keys[e.key.toLowerCase()]=false});
+  canvas.addEventListener('mousemove', e=>{const r=canvas.getBoundingClientRect();mouse.x=(e.clientX-r.left)*(canvas.width/r.width);mouse.y=(e.clientY-r.top)*(canvas.height/r.height)});
+  canvas.addEventListener('mousedown', ()=>mouse.down=true);
+  canvas.addEventListener('mouseup', ()=>mouse.down=false);
+
+  // Game state
+  let players = [];
+  let projectiles = [];
+  let effects = [];
+  let score = {red:0,blue:0};
+
+  function rand(min,max){return Math.random()*(max-min)+min}
+
+  const templates = {
+    mrudav: {team:'red',name:'Mrudav',color:'#ff6b6b',weapon:'sniper',maxHp:100,maxEnergy:100,ability:'precision',abilityCd:10},
+    aryan:  {team:'red',name:'Aryan',color:'#ff8a6b',weapon:'melee',maxHp:120,maxEnergy:80,ability:'rage',abilityCd:12},
+    dinh:   {team:'red',name:'Dinh',color:'#ffb3b3',weapon:'smg',maxHp:90,maxEnergy:120,ability:'phantom',abilityCd:11},
+    quach:  {team:'red',name:'Quach',color:'#e66b6b',weapon:'launcher',maxHp:110,maxEnergy:90,ability:'fort',abilityCd:14},
+    nguyen: {team:'blue',name:'Nguyen',color:'#6fb0ff',weapon:'assault',maxHp:100,maxEnergy:100,ability:'insight',abilityCd:10},
+    genn:   {team:'blue',name:'Gennady',color:'#88b9ff',weapon:'rail',maxHp:95,maxEnergy:110,ability:'predict',abilityCd:14},
+    yung:   {team:'blue',name:'Yung',color:'#5f9fff',weapon:'crossbow',maxHp:85,maxEnergy:130,ability:'silent',abilityCd:9},
+    anh:    {team:'blue',name:'Anh',color:'#4f8cff',weapon:'shield',maxHp:130,maxEnergy:80,ability:'echo',abilityCd:13}
+  };
+
+  function createPlayers(){
+    players = [];
+    const order = ['mrudav','aryan','dinh','quach','nguyen','genn','yung','anh'];
+    order.forEach((k,i)=>{
+      const t = templates[k];
+      players.push({
+        id:i,
+        tpl:k,
+        team:t.team,
+        name:t.name,
+        color:t.color,
+        x: (t.team==='red'?100:W-100),
+        y: 120 + (i%4)*140,
+        vx:0,vy:0,
+        angle:0,
+        hp:t.maxHp, maxHp:t.maxHp,
+        energy:t.maxEnergy, maxEnergy:t.maxEnergy,
+        weapon:t.weapon,
+        ability:t.ability,
+        abilityCd:t.abilityCd,
+        abilityTimer:0,
+        alive:true,
+        ai: t.team==='blue' // player controls red by default
+      })
+    });
+  }
+
+  createPlayers();
+
+  // Choose controlled player (first red player)
+  let playerId = players.find(p=>p.team==='red').id;
+
+  function spawnProjectile(owner, x,y, angle, speed, life, damage, color){
+    projectiles.push({owner, x,y, vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed, life, damage, color})
+  }
+
+  function useAbility(p){
+    if(p.abilityTimer>0) return;
+    p.abilityTimer = p.abilityCd;
+    // effects by ability
+    switch(p.ability){
+      case 'precision': // slow time
+        effects.push({type:'slow',t:3,amt:0.25});
+        break;
+      case 'rage':
+        p.rage = 8; // increased speed & melee damage
+        break;
+      case 'phantom':
+        // spawn clones that draw aggro
+        for(let i=0;i<3;i++) effects.push({type:'clone',x:p.x+rand(-40,40),y:p.y+rand(-40,40),t:4});
+        break;
+      case 'fort':
+        effects.push({type:'fort',x:p.x+50*(p.team==='red'?1:-1),y:p.y,t:6});
+        break;
+      case 'insight':
+        effects.push({type:'reveal',t:6});
+        break;
+      case 'predict':
+        // next projectile will home
+        p.predict = 4; break;
+      case 'silent':
+        p.invis = 5; break;
+      case 'echo':
+        p.echo = 5; break;
+    }
+  }
+
+  // Basic AI
+  function updateAI(p,dt){
+    if(!p.alive) return;
+    // simple behavior: move toward nearest enemy, shoot occasionally, use ability randomly
+    const enemies = players.filter(q=>q.team!==p.team && q.alive);
+    if(enemies.length===0) return;
+    let target = enemies[Math.floor(Math.random()*enemies.length)];
+    // move
+    const dx = target.x - p.x, dy = target.y - p.y;
+    const dist = Math.hypot(dx,dy)||1;
+    p.angle = Math.atan2(dy,dx);
+    p.vx += (dx/dist)*(dt*40)/60;
+    p.vy += (dy/dist)*(dt*40)/60;
+
+    // shoot with some probability
+    if(Math.random()<0.02*dt) {
+      const spd = (p.weapon==='rail'?8: (p.weapon==='sniper'?10:6));
+      spawnProjectile(p.id,p.x,p.y,p.angle,spd,2,15,p.color);
+    }
+    // use ability rarely
+    if(Math.random()<0.001*dt && p.abilityTimer<=0) useAbility(p);
+  }
+
+  // main update
+  let last = performance.now();
+  let timeScale = 1;
+  function step(now){
+    const dt = Math.min(40, now-last); last = now;
+    const secs = dt/1000 * timeScale;
+
+    // update effects
+    timeScale = 1; // reset
+    effects.forEach(e=>{
+      e.t -= secs;
+      if(e.type==='slow' && e.t>0) timeScale = e.amt;
+    });
+    effects = effects.filter(e=>e.t>0);
+
+    // player control
+    const p = players[playerId];
+    if(p && p.alive && !p.ai){
+      let spd = 160 * (p.rage?1.6:1);
+      if(keys['shift']) spd*=1.2;
+      let dx=0,dy=0;
+      if(keys['w']) dy-=1; if(keys['s']) dy+=1; if(keys['a']) dx-=1; if(keys['d']) dx+=1;
+      if(dx!==0||dy!==0){ const m=Math.hypot(dx,dy)||1; p.vx += dx/m * spd * dt/1000; p.vy += dy/m * spd * dt/1000; }
+      // aim toward mouse
+      p.angle = Math.atan2(mouse.y - p.y, mouse.x - p.x);
+      // shoot
+      if(mouse.down){
+        // cooldown based on weapon
+        if(!p.cooldown) p.cooldown = 0;
+        if(p.cooldown<=0){
+          const spd = (p.weapon==='rail'?9:(p.weapon==='sniper'?12:(p.weapon==='smg'?6:7)));
+          let dmg = 14; if(p.weapon==='melee') dmg=25; if(p.weapon==='rail') dmg=28;
+          // predictive
+          if(p.predict) {
+            // aim at a leading point (very simple)
+            p.predict--; 
+          }
+          spawnProjectile(p.id,p.x+p.vx*0.05,p.y+p.vy*0.05,p.angle,spd,2,dmg,p.color);
+          p.cooldown = p.weapon==='smg'?120: p.weapon==='sniper'?600: p.weapon==='melee'?350: p.weapon==='rail'?1000:400;
+        }
+      }
+      if(keys['e']){ useAbility(p); keys['e']=false; }
+      if(keys['r']){ // respawn
+        if(!p.alive){ p.hp = p.maxHp; p.alive=true; p.x = 100; p.y = 120; }
+      }
+    }
+
+    // update AI players
+    players.forEach(pl=>{
+      if(pl.ai) updateAI(pl,dt);
+      // physics
+      pl.x += pl.vx * dt/1000;
+      pl.y += pl.vy * dt/1000;
+      pl.vx *= 0.9; pl.vy *= 0.9;
+      // clamp
+      pl.x = Math.max(20, Math.min(W-20, pl.x)); pl.y = Math.max(20, Math.min(H-20, pl.y));
+      if(pl.abilityTimer>0) pl.abilityTimer -= secs;
+      if(pl.rage) pl.rage = Math.max(0, pl.rage - secs);
+      if(pl.invis) pl.invis = Math.max(0, pl.invis - secs);
+      if(pl.predict) pl.predict = Math.max(0, pl.predict - secs);
+      if(pl.echo) pl.echo = Math.max(0, pl.echo - secs);
+    });
+
+    // projectiles
+    projectiles.forEach(pr=>{
+      pr.x += pr.vx * dt/1000 / timeScale;
+      pr.y += pr.vy * dt/1000 / timeScale;
+      pr.life -= dt/1000;
+      // collisions
+      players.forEach(targ=>{
+        if(!targ.alive) return;
+        if(targ.id===pr.owner) return; // no friendly fire check removed for fun
+        const dx = targ.x-pr.x, dy = targ.y-pr.y; if(Math.hypot(dx,dy)<20){
+          targ.hp -= pr.damage;
+          effects.push({type:'hit',x:pr.x,y:pr.y,t:0.4});
+          pr.life = -1;
+          if(targ.hp<=0){targ.alive=false; effects.push({type:'down',x:targ.x,y:targ.y,t:2}); if(players[pr.owner]){ if(players[pr.owner].team==='red') score.red++; else score.blue++; }}
+        }
+      })
+    });
+    projectiles = projectiles.filter(p=>p.life>0 && p.x>-50 && p.x<W+50 && p.y>-50 && p.y<H+50);
+
+    // HUD update
+    if(p){ hpBar.style.width = Math.max(0,(p.hp/p.maxHp*100))+'%'; energyBar.style.width = Math.max(0,(p.energy/p.maxEnergy*100))+'%'; cdBar.style.width = Math.max(0,((p.abilityTimer? (p.abilityTimer/p.abilityCd):0))*100)+'%'; }
+
+    // render
+    render();
+    requestAnimationFrame(step);
+  }
+
+  function render(){
+    // clear
+    ctx.clearRect(0,0,W,H);
+    // ground grid
+    ctx.fillStyle='rgba(255,255,255,0.02)';
+    for(let gx=0;gx<W;gx+=40){ ctx.fillRect(gx,0,1,H); }
+    for(let gy=0;gy<H;gy+=40){ ctx.fillRect(0,gy,W,1); }
+
+    // effects: forts
+    effects.forEach(e=>{
+      if(e.type==='fort'){
+        ctx.fillStyle='rgba(200,200,255,0.06)'; ctx.beginPath(); ctx.arc(e.x,e.y,60,0,Math.PI*2); ctx.fill();
+      }
+    });
+
+    // players
+    players.forEach(pl=>{
+      if(!pl.alive){ ctx.globalAlpha=0.4; }
+      // aura if ability
+      if(pl.invis>0) ctx.globalAlpha=0.3; else ctx.globalAlpha=1;
+      ctx.save();
+      ctx.translate(pl.x,pl.y);
+      // body
+      ctx.fillStyle = pl.color; ctx.beginPath(); ctx.arc(0,0,16,0,Math.PI*2); ctx.fill();
+      // direction
+      ctx.rotate(pl.angle);
+      ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(16,-4,18,8);
+      ctx.restore();
+      // name
+      ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.font='12px sans-serif'; ctx.fillText(pl.name, pl.x-24, pl.y-26);
+      // HP bar
+      ctx.fillStyle='rgba(255,255,255,0.08)'; ctx.fillRect(pl.x-22,pl.y+18,44,6);
+      ctx.fillStyle=pl.team==='red'? 'rgba(255,120,120,0.9)' : 'rgba(120,170,255,0.95)';
+      ctx.fillRect(pl.x-22,pl.y+18,44*(Math.max(0,pl.hp)/pl.maxHp),6);
+      ctx.globalAlpha=1;
+    });
+
+    // projectiles
+    projectiles.forEach(pr=>{
+      ctx.beginPath(); ctx.arc(pr.x,pr.y,4,0,Math.PI*2); ctx.fillStyle = pr.color || '#fff'; ctx.fill();
+    });
+
+    // effects: hits
+    effects.forEach(e=>{
+      if(e.type==='hit'){
+        ctx.fillStyle='rgba(255,220,60,'+Math.max(0, e.t/0.4)+')'; ctx.beginPath(); ctx.arc(e.x,e.y,8*(e.t/0.4),0,Math.PI*2); ctx.fill();
+      }
+      if(e.type==='clone'){
+        ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.beginPath(); ctx.arc(e.x,e.y,12,0,Math.PI*2); ctx.fill();
+      }
+      if(e.type==='down'){
+        ctx.fillStyle='rgba(180,60,80,0.12)'; ctx.beginPath(); ctx.arc(e.x,e.y,28*(e.t/2),0,Math.PI*2); ctx.fill();
+      }
+    });
+
+    // center scores
+    ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(W/2-120,8,240,36);
+    ctx.fillStyle='#ff7b7b'; ctx.font='20px sans-serif'; ctx.fillText(score.red, W/2-40, 32);
+    ctx.fillStyle='#9fbfff'; ctx.fillText(score.blue, W/2+20, 32);
+  }
+
+  requestAnimationFrame(step);
+
+  // respawn button
+  document.getElementById('respawnBtn').addEventListener('click', ()=>{ const p = players[playerId]; if(!p.alive){ p.alive=true; p.hp=p.maxHp; p.x=100; p.y=120; } });
+
+  // small helper: switch player with number keys 1-4 (red)
+  window.addEventListener('keydown', e=>{ if(['1','2','3','4'].includes(e.key)){ const reds = players.filter(p=>p.team==='red'); const idx = Math.max(0, Math.min(reds.length-1, parseInt(e.key)-1)); if(reds[idx]) playerId = reds[idx].id; }});
+
+  // instructions to user in console
+  console.log('Chalk Warfare 4.0 prototype loaded. Controls: WASD, mouse, click to shoot, E to use ability, R to respawn.');
+  </script>
+</body>
+</html>
